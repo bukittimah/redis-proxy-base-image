@@ -1,8 +1,10 @@
-name: Build base images
+name: Build test base images
 
 on:
   push:
-    branches: ['master']
+    branches:
+      - feature-*
+      - bugfix-*
 
 env:
   REGISTRY: ghcr.io
@@ -16,6 +18,9 @@ jobs:
       packages: write
 
     steps:
+      - name: Set lower case image name
+        run: |
+          echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >>${GITHUB_ENV}    
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
@@ -32,7 +37,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}
 
       - name: Build and push build image
         uses: docker/build-push-action@v2
@@ -40,8 +45,8 @@ jobs:
           context: "./build"
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:test-build-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:test-build-latest
 
       - name: Build and push pack image
         uses: docker/build-push-action@v2
@@ -49,5 +54,5 @@ jobs:
           context: "./pack"
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pack-${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pack-latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:test-pack-${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:test-pack-latest
